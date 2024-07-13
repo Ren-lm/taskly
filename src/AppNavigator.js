@@ -1,8 +1,10 @@
+//AppNavigator.js 
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import TaskView from './screens/TaskView';
 import AccountScreen from './screens/AccountScreen';
+import TaskDetails from './screens/TaskDetails';
 
 const Stack = createStackNavigator();
 
@@ -12,6 +14,8 @@ const AppNavigator = () => {
       <Stack.Navigator initialRouteName="AccountScreen">
         <Stack.Screen name="AccountScreen" component={AccountScreen} />
         <Stack.Screen name="TaskView" component={TaskView} />
+        <Stack.Screen name="TaskDetails" component={TaskDetails} options={{ title: 'Task Details' }} />
+
       </Stack.Navigator>
     </NavigationContainer>
   );
