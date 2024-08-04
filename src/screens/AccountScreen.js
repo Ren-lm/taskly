@@ -1,7 +1,8 @@
 // Frontend Code: AccountScreen.js
+
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet, Modal, TouchableWithoutFeedback } from 'react-native';
-import { AntDesign, MaterialIcons } from '@expo/vector-icons';
+import { AntDesign, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
 
 const API_URL = 'http://localhost:3000';
@@ -72,10 +73,19 @@ const AccountScreen = ({ navigation }) => {
             <AntDesign name="setting" size={24} color="#222831" />
           </TouchableOpacity>
         </View>
-        
-        <Text style={styles.sectionTitle}>My Day</Text>
-        <Text style={styles.sectionTitle}>Important</Text>
-        
+
+        {/* My Day Section with Sun Icon */}
+        <TouchableOpacity style={styles.sectionContainer} onPress={() => navigation.navigate('MyDay')}>
+          <FontAwesome name="sun-o" size={24} color="#666666" style={styles.icon} />
+          <Text style={styles.sectionTitle}>My Day</Text>
+        </TouchableOpacity>
+
+        {/* Important Section with Star Icon */}
+        <TouchableOpacity style={styles.sectionContainer} onPress={() => navigation.navigate('Important')}>
+          <FontAwesome name="star" size={24} color="#666666" style={styles.icon} />
+          <Text style={styles.sectionTitle}>Important</Text>
+        </TouchableOpacity>
+
         <Text style={styles.title}>My Lists</Text>
         <FlatList
           data={lists}
@@ -142,14 +152,22 @@ const styles = StyleSheet.create({
   iconButton: {
     padding: 10,
   },
+  sectionContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  icon: {
+    marginRight: 10,
+  },
   sectionTitle: {
     fontSize: 18,
     color: '#FFFFFF',
-    marginBottom: 10,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
+    marginTop: 70,
     marginBottom: 20,
     color: '#FFFFFF',
   },
