@@ -1,16 +1,22 @@
 //Backend code: index.js
 
 const express = require('express');
-const mongoose = require('mongoose');
+const { google } = require('googleapis');
 const bodyParser = require('body-parser');
+const fs = require('fs');
+const path = require('path');
 const cors = require('cors');
 const multer = require('multer');
-const path = require('path');
+const mongoose = require('mongoose');
+
+//const User = require('./models/User'); // Assuming you have user authentication
 
 const app = express();
 const port = 3000;
 
+
 app.use(bodyParser.json({ limit: '50mb' }));
+
 
 const corsOptions = {
   origin: 'http://192.168.100.197:8081', // Adjust this URL to match where your frontend is running
@@ -18,6 +24,19 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
+// Load Google API credentials
+let credentials;
+try {
+  credentials = JSON.parse(fs.readFileSync('credentials.json'));
+} catch (error) {
+  console.error('Error loading credentials.json:', error);
+  process.exit(1);
+}
+
+const { client_secret, client_id } = credentials.web;
+const redirect_uris = credentials.web.redirect_uris || ["http://localhost:3000/auth/google/callback"]; 
+const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -30,7 +49,6 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-const fs = require('fs');
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir);
@@ -117,29 +135,6 @@ app.post('/tasks', async (req, res) => {
   }
 });
 
-// app.put('/tasks/:listId/:taskId', async (req, res) => {
-//   const { listId, taskId } = req.params;
-//   const { name, description, dueDate, completed, files, category, important } = req.body;
-//   const list = await List.findById(listId);
-//   if (list) {
-//     const task = list.tasks.id(taskId);
-//     if (task) {
-//       task.name = name;
-//       task.description = description;
-//       task.dueDate = dueDate;
-//       task.completed = completed;
-//       task.files = files;
-//       task.category = category;
-//       task.important = important; // Ensure the important field is updated
-//       await list.save();
-//       res.send(task);
-//     } else {
-//       res.status(404).send({ message: 'Task not found' });
-//     }
-//   } else {
-//     res.status(404).send({ message: 'List not found' });
-//   }
-// });
 
 app.put('/tasks/:listId/:taskId', async (req, res) => {
   const { listId, taskId } = req.params;
@@ -288,10 +283,66 @@ app.get('/tasks/important', async (req, res) => {
 });
 
 
-
-
-
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Middleware
+app.use(bodyParser.json());
+
+// Google Calendar API Setup
+const SCOPES = ['https://www.googleapis.com/auth/calendar'];
+const TOKEN_PATH = 'token.json';
+
+
+// Route to get Google authentication URL
+app.get('/google-auth-url', (req, res) => {
+  const authUrl = oAuth2Client.generateAuthUrl({
+    access_type: 'offline',
+    scope: SCOPES,
+  });
+  res.send({ authUrl });
+});
+
+// Callback route for Google OAuth
+app.get('/auth/google/callback', async (req, res) => {
+  const code = req.query.code;
+  const { tokens } = await oAuth2Client.getToken(code);
+  oAuth2Client.setCredentials(tokens);
+  fs.writeFileSync(TOKEN_PATH, JSON.stringify(tokens));
+  res.send('Google Calendar setup successful!');
+});
+
+// Route to create an event
+app.post('/create-event', async (req, res) => {
+  const { summary, description, location, startDateTime, endDateTime } = req.body;
+  
+  const calendar = google.calendar({ version: 'v3', auth: oAuth2Client });
+  
+  const event = {
+    summary,
+    location,
+    description,
+    start: {
+      dateTime: startDateTime,
+      timeZone: 'America/Los_Angeles',
+    },
+    end: {
+      dateTime: endDateTime,
+      timeZone: 'America/Los_Angeles',
+    },
+  };
+
+  try {
+    const eventResponse = await calendar.events.insert({
+      calendarId: 'primary',
+      resource: event,
+    });
+    res.send({ eventUrl: eventResponse.data.htmlLink });
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
+
+
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
