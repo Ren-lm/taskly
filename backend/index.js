@@ -1,4 +1,4 @@
-//Backend code: index.js
+//Backend/index.js
 
 const express = require('express');
 const { google } = require('googleapis');
@@ -8,6 +8,7 @@ const path = require('path');
 const cors = require('cors');
 const multer = require('multer');
 const mongoose = require('mongoose');
+const authRoutes = require('./routes/auth'); 
 
 //const User = require('./models/User'); // Assuming you have user authentication
 
@@ -19,11 +20,14 @@ app.use(bodyParser.json({ limit: '50mb' }));
 
 
 const corsOptions = {
-  origin: 'http://192.168.100.197:8081', // Adjust this URL to match where your frontend is running
+  origin: 'http://192.168.100.197:8081',
   optionsSuccessStatus: 200,
 };
 
 app.use(cors(corsOptions));
+
+// Use auth routes
+app.use('/api/auth', authRoutes);
 
 // Load Google API credentials
 let credentials;
