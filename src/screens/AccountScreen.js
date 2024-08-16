@@ -30,12 +30,10 @@ const AccountScreen = ({ navigation }) => {
 
   const [listName, setListName] = useState("");
   const [isModalVisible, setIsModalVisible] = useState(false);
-  // const [user, setUser] = useState(null);
   const user = useUser();
 
   useEffect(() => {
     fetchLists();
-    // fetchUserData();
   }, []);
 
   const fetchLists = async () => {
