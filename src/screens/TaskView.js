@@ -21,6 +21,20 @@ import { CountdownCircleTimer } from "react-native-countdown-circle-timer";
 import axios from "axios";
 import { Picker } from "@react-native-picker/picker";
 
+export const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  const currentYear = new Date().getFullYear();
+  const taskYear = date.getFullYear();
+
+  if (taskYear === currentYear) {
+    return `${date.getMonth() + 1}/${date.getDate()}`;
+  } else {
+    return `${date.getMonth() + 1}/${date.getDate()}/${taskYear
+      .toString()
+      .slice(-2)}`;
+  }
+};
+
 const TaskView = ({ route, navigation }) => {
   const { listId, listName } = route.params;
   const [tasks, setTasks] = useState([]);
@@ -118,25 +132,13 @@ const TaskView = ({ route, navigation }) => {
   const renderRightActions = (id) => (
     <TouchableOpacity
       style={styles.deleteButton}
-      onPress={() => deleteTask(id)}
+      onPress={() => {
+        deleteTask(id);
+      }}
     >
       <MaterialIcons name="delete" size={24} color="#FFFFFF" />
     </TouchableOpacity>
   );
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const currentYear = new Date().getFullYear();
-    const taskYear = date.getFullYear();
-
-    if (taskYear === currentYear) {
-      return `${date.getMonth() + 1}/${date.getDate()}`;
-    } else {
-      return `${date.getMonth() + 1}/${date.getDate()}/${taskYear
-        .toString()
-        .slice(-2)}`;
-    }
-  };
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -187,99 +189,14 @@ const TaskView = ({ route, navigation }) => {
           data={tasks}
           renderItem={({ item }) => (
             <Swipeable renderRightActions={() => renderRightActions(item._id)}>
-              <TouchableOpacity
-                onPress={() =>
-                  navigation.navigate("TaskDetails", {
-                    task: item,
-                    listId,
-                    fetchTasks,
-                  })
-                }
-              >
-                <View style={styles.taskContainer}>
-                  <TouchableOpacity
-                    onPress={() => toggleCompleteTask(item._id)}
-                  >
-                    <MaterialIcons
-                      name={
-                        item.completed
-                          ? "check-circle"
-                          : "radio-button-unchecked"
-                      }
-                      size={24}
-                      color={item.completed ? "#22A39F" : "#222831"}
-                    />
-                  </TouchableOpacity>
-                  <View style={{ flex: 1 }}>
-                    <Text
-                      style={[
-                        styles.task,
-                        item.completed && styles.completedTask,
-                      ]}
-                    >
-                      {item.name}
-                    </Text>
-                    {item.files && item.files.length > 0 && (
-                      <View style={styles.attachmentContainer}>
-                        <MaterialIcons
-                          name="attach-file"
-                          size={20}
-                          color="#222831"
-                        />
-                        <Text style={styles.attachmentCount}>
-                          {item.files.length}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                  <View style={styles.rightContainer}>
-                    <View style={styles.dueDateContainer}>
-                      <MaterialIcons
-                        name="calendar-today"
-                        size={18}
-                        color={
-                          item.dueDate && new Date(item.dueDate) < new Date()
-                            ? "red"
-                            : "#222831"
-                        }
-                      />
-                      <Text
-                        style={[
-                          styles.dueDate,
-                          item.dueDate &&
-                            new Date(item.dueDate) < new Date() &&
-                            styles.overdue,
-                        ]}
-                      >
-                        {item.dueDate ? formatDate(item.dueDate) : ""}
-                      </Text>
-                      {item.dueDate && new Date(item.dueDate) < new Date() && (
-                        <MaterialIcons name="error" size={18} color="red" />
-                      )}
-                      {item.important && (
-                        <FontAwesome
-                          name="star"
-                          size={18}
-                          color="#FFD700"
-                          style={styles.importantIcon}
-                        />
-                      )}
-                    </View>
-                    {item.category && (
-                      <View
-                        style={[
-                          styles.categoryOrb,
-                          { backgroundColor: item.category.color },
-                        ]}
-                      >
-                        <Text style={styles.categoryOrbText}>
-                          {item.category.name}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                </View>
-              </TouchableOpacity>
+              <TaskItem
+                navigation={navigation}
+                item={item}
+                listId={listId}
+                fetchTasks={fetchTasks}
+                toggleCompleteTask={toggleCompleteTask}
+                formatDate={formatDate}
+              />
             </Swipeable>
           )}
           keyExtractor={(item) => item._id.toString()}
@@ -359,160 +276,246 @@ const TaskView = ({ route, navigation }) => {
   );
 };
 
+export function TaskItem({
+  navigation,
+  item,
+  listId,
+  fetchTasks,
+  toggleCompleteTask,
+  formatDate,
+}) {
+  return (
+    <TouchableOpacity
+      onPress={() =>
+        navigation.navigate("TaskDetails", {
+          task: item,
+          listId,
+          fetchTasks,
+        })
+      }
+    >
+      <View style={styles.taskContainer}>
+        <TouchableOpacity onPress={() => toggleCompleteTask(item._id)}>
+          <MaterialIcons
+            name={item.completed ? "check-circle" : "radio-button-unchecked"}
+            size={24}
+            color={item.completed ? "#22A39F" : "#222831"}
+          />
+        </TouchableOpacity>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.task, item.completed && styles.completedTask]}>
+            {item.name}
+          </Text>
+          {item.files && item.files.length > 0 && (
+            <View style={styles.attachmentContainer}>
+              <MaterialIcons name="attach-file" size={20} color="#222831" />
+              <Text style={styles.attachmentCount}>{item.files.length}</Text>
+            </View>
+          )}
+        </View>
+        <View style={styles.rightContainer}>
+          <View style={styles.dueDateContainer}>
+            <MaterialIcons
+              name="calendar-today"
+              size={18}
+              color={
+                item.dueDate && new Date(item.dueDate) < new Date()
+                  ? "red"
+                  : "#222831"
+              }
+            />
+            <Text
+              style={[
+                styles.dueDate,
+                item.dueDate &&
+                  new Date(item.dueDate) < new Date() &&
+                  styles.overdue,
+              ]}
+            >
+              {item.dueDate ? formatDate(item.dueDate) : ""}
+            </Text>
+            {item.dueDate && new Date(item.dueDate) < new Date() && (
+              <MaterialIcons name="error" size={18} color="red" />
+            )}
+            {item.important && (
+              <FontAwesome
+                name="star"
+                size={18}
+                color="#FFD700"
+                style={styles.importantIcon}
+              />
+            )}
+          </View>
+          {item.category && (
+            <View
+              style={[
+                styles.categoryOrb,
+                { backgroundColor: item.category.color },
+              ]}
+            >
+              <Text style={styles.categoryOrbText}>{item.category.name}</Text>
+            </View>
+          )}
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#31363F',
+    backgroundColor: "#31363F",
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 20,
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   taskContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 10,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     marginBottom: 10,
     borderRadius: 5,
   },
   task: {
     fontSize: 20,
-    color: '#222831',
+    color: "#222831",
     marginLeft: 10,
     flex: 1, // Ensure task name takes up available space
   },
   completedTask: {
-    textDecorationLine: 'line-through',
-    color: '#AAAAAA',
+    textDecorationLine: "line-through",
+    color: "#AAAAAA",
   },
   addButton: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 20,
     right: 20,
   },
   deleteButton: {
-    backgroundColor: '#EE4E4E',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#EE4E4E",
+    justifyContent: "center",
+    alignItems: "center",
     width: 70,
-    height: '100%',
+    height: "100%",
     borderRadius: 5,
   },
   timerContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20,
   },
   timerText: {
     fontSize: 20,
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   timerControls: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '80%',
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: "80%",
     marginTop: 10,
   },
   dueDateContainer: {
-    flexDirection: 'row', // Arrange items in a row
-    alignItems: 'center', // Align items in the center vertically
+    flexDirection: "row", // Arrange items in a row
+    alignItems: "center", // Align items in the center vertically
   },
   dueDate: {
     fontSize: 16,
-    color: '#222831',
+    color: "#222831",
     marginLeft: 5, // Add some spacing between the icon and the text
   },
   overdue: {
-    color: 'red',
+    color: "red",
   },
   importantIcon: {
     marginLeft: 5, // Add space between the due date and star icon
   },
   filePreviewContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 5,
   },
   fileName: {
     fontSize: 14,
-    color: '#AAAAAA',
+    color: "#AAAAAA",
     marginVertical: 10,
   },
   attachmentContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 5,
   },
   attachmentCount: {
     fontSize: 14,
-    color: '#222831',
+    color: "#222831",
     marginLeft: 5,
   },
   rightContainer: {
-    flexDirection: 'column',
-    alignItems: 'flex-end',
+    flexDirection: "column",
+    alignItems: "flex-end",
   },
   categoryOrb: {
     width: 150,
     height: 25,
     borderRadius: 12,
     marginTop: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   categoryOrbText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 13,
   },
   modalOverlay: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContainer: {
-    backgroundColor: '#EEEEEE',
+    backgroundColor: "#EEEEEE",
     padding: 20,
     borderRadius: 10,
-    width: '80%',
-    alignItems: 'center',
+    width: "80%",
+    alignItems: "center",
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 10,
-    color: '#222831',
+    color: "#222831",
   },
   picker: {
-    width: '100%',
+    width: "100%",
     height: 150, // Adjust height to fit the content better
     marginBottom: 20, // Add space between picker and custom input
   },
   customTimeInput: {
     borderWidth: 1,
-    borderColor: '#007AFF', // Noticeable blue border color
+    borderColor: "#007AFF", // Noticeable blue border color
     borderRadius: 5,
     padding: 10,
     fontSize: 16,
-    color: '#222831',
-    width: '100%',
-    backgroundColor: '#FFFFFF', // Solid white background for visibility
+    color: "#222831",
+    width: "100%",
+    backgroundColor: "#FFFFFF", // Solid white background for visibility
   },
   customTimeSetButton: {
-    backgroundColor: '#22A39F', // Teal background
+    backgroundColor: "#22A39F", // Teal background
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 10,
   },
   customTimeSetButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });
 
