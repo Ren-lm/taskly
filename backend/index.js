@@ -1,5 +1,4 @@
 //Backend/index.js
-
 const express = require("express");
 const { google } = require("googleapis");
 const bodyParser = require("body-parser");
@@ -11,21 +10,21 @@ const mongoose = require("mongoose");
 const authRoutes = require("./routes/auth");
 const { authenticateToken } = require("./utils");
 
-//const User = require('./models/User'); // Assuming you have user authentication
-
+// Initialize Express app
 const app = express();
 const port = 3000;
 
+// Set up bodyParser to handle JSON requests with a larger payload
 app.use(bodyParser.json({ limit: "50mb" }));
 
+// Configure CORS to allow requests from any origin
 const corsOptions = {
   origin: "*", // Adjust this URL to match where your frontend is running
   optionsSuccessStatus: 200,
 };
-
 app.use(cors(corsOptions));
 
-// Use auth routes
+// Use authentication routes
 app.use("/api/auth", authRoutes);
 
 // Load Google API credentials
@@ -34,9 +33,10 @@ try {
   credentials = JSON.parse(fs.readFileSync("credentials.json"));
 } catch (error) {
   console.error("Error loading credentials.json:", error);
-  process.exit(1);
+  process.exit(1); // Exit if credentials are not found
 }
 
+// Set up OAuth2 client for Google APIs
 const { client_secret, client_id } = credentials.web;
 const redirect_uris = credentials.web.redirect_uris || [
   "http://localhost:3000/auth/google/callback",
@@ -47,6 +47,7 @@ const oAuth2Client = new google.auth.OAuth2(
   redirect_uris[0]
 );
 
+// Configure Multer for file uploads such as destination and filename
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "uploads/");
@@ -58,11 +59,13 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
+// Create uploads directory if it doesn't exist
 const uploadsDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir);
 }
 
+// Connect to MongoDB database
 mongoose
   .connect("mongodb://localhost:27017/taskly", {
     useNewUrlParser: true,
@@ -75,6 +78,7 @@ mongoose
     console.error("Failed to connect to MongoDB", err);
   });
 
+// Define Mongoose schemas for categories, files, tasks, and lists
 const CategorySchema = new mongoose.Schema({
   name: String,
   color: String,
@@ -105,9 +109,11 @@ const ListSchema = new mongoose.Schema({
   },
 });
 
+// Create Mongoose models based on the schemas
 const List = mongoose.model("List", ListSchema);
 const Category = mongoose.model("Category", CategorySchema);
 
+// Route to get all lists for the authenticated user
 app.get("/lists", authenticateToken, async (req, res) => {
   const lists = await List.find({
     uid: req?.user?.userId,
@@ -115,17 +121,20 @@ app.get("/lists", authenticateToken, async (req, res) => {
   res.send(lists);
 });
 
+// Route to create a new list
 app.post("/lists", async (req, res) => {
   const newList = new List(req.body);
   await newList.save();
   res.send(newList);
 });
 
+// Route to delete a list by its ID
 app.delete("/lists/:id", async (req, res) => {
   await List.findByIdAndDelete(req.params.id);
   res.send({ message: "List deleted" });
 });
 
+// Route to get tasks for a specific list
 app.get("/tasks", async (req, res) => {
   const { listId } = req.query;
   const list = await List.findById(listId).populate("tasks.category");
@@ -136,6 +145,7 @@ app.get("/tasks", async (req, res) => {
   }
 });
 
+// Route to create a new task in a specific list
 app.post("/tasks", async (req, res) => {
   const { listId, task } = req.body;
   const list = await List.findById(listId);
@@ -153,6 +163,7 @@ app.post("/tasks", async (req, res) => {
   }
 });
 
+// Route to update a specific task in a specific list
 app.put("/tasks/:listId/:taskId", async (req, res) => {
   const { listId, taskId } = req.params;
   const { name, description, dueDate, completed, files, category, important } =
@@ -166,6 +177,7 @@ app.put("/tasks/:listId/:taskId", async (req, res) => {
     if (list) {
       const task = list.tasks.id(taskId);
       if (task) {
+        // Update task details
         task.name = name;
         task.description = description;
         task.dueDate = dueDate;
@@ -191,6 +203,7 @@ app.put("/tasks/:listId/:taskId", async (req, res) => {
   }
 });
 
+// Route to handle file uploads
 app.post("/upload", upload.single("file"), (req, res) => {
   try {
     if (!req.file) {
@@ -206,6 +219,7 @@ app.post("/upload", upload.single("file"), (req, res) => {
   }
 });
 
+// Route to delete a task by its ID from a specific list
 app.delete("/tasks/:listId/:taskId", async (req, res) => {
   const { listId, taskId } = req.params;
 
@@ -231,6 +245,7 @@ app.delete("/tasks/:listId/:taskId", async (req, res) => {
   }
 });
 
+// Route to get all categories
 app.get("/categories", async (req, res) => {
   try {
     const categories = await Category.find();
@@ -240,6 +255,7 @@ app.get("/categories", async (req, res) => {
   }
 });
 
+// Route to create a new category
 app.post("/categories", async (req, res) => {
   try {
     const newCategory = new Category(req.body);
@@ -250,6 +266,7 @@ app.post("/categories", async (req, res) => {
   }
 });
 
+// Route to delete a category by its ID
 app.delete("/categories/:id", async (req, res) => {
   try {
     await Category.findByIdAndDelete(req.params.id);
@@ -259,6 +276,7 @@ app.delete("/categories/:id", async (req, res) => {
   }
 });
 
+// Route to get tasks due today for the authenticated user
 app.get("/tasks/today", authenticateToken, async (req, res) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -290,6 +308,7 @@ app.get("/tasks/today", authenticateToken, async (req, res) => {
   }
 });
 
+// Route to get important tasks for the authenticated user
 app.get("/tasks/important", authenticateToken, async (req, res) => {
   console.log("Fetching important tasks...");
 
@@ -321,6 +340,7 @@ app.get("/tasks/important", authenticateToken, async (req, res) => {
   }
 });
 
+// Serve the uploaded files as static assets
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Middleware
@@ -348,7 +368,7 @@ app.get("/auth/google/callback", async (req, res) => {
   res.send("Google Calendar setup successful!");
 });
 
-// Route to create an event
+// Route to create a Google Calendar event
 app.post("/create-event", async (req, res) => {
   const { summary, description, location, startDateTime, endDateTime } =
     req.body;
@@ -380,6 +400,7 @@ app.post("/create-event", async (req, res) => {
   }
 });
 
+// Start the server
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });

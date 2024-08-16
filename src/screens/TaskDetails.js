@@ -1,4 +1,4 @@
-//Frontend code: TaskDetails.js
+// Frontend code: TaskDetails.js
 
 import React, { useState, useEffect } from "react";
 import {
@@ -23,6 +23,7 @@ import * as IntentLauncher from "expo-intent-launcher";
 import * as Linking from "expo-linking";
 import axios from "axios";
 
+// Predefined color options for categories and then users can add more later through UI
 const predefinedColors = [
   { name: "Red", value: "#FF0000" },
   { name: "Green", value: "#00FF00" },
@@ -30,46 +31,49 @@ const predefinedColors = [
 ];
 
 const TaskDetails = ({ route, navigation }) => {
-  const { task, listId, fetchTasks } = route.params;
-  const [taskName, setTaskName] = useState(task ? task.name : "");
-  const [description, setDescription] = useState(task ? task.description : "");
+  const { task, listId, fetchTasks } = route.params; // Gets task details and fetchTasks function from route params
+  const [taskName, setTaskName] = useState(task ? task.name : ""); // State to store the task name
+  const [description, setDescription] = useState(task ? task.description : ""); // State to store the task description
   const [selectedDate, setSelectedDate] = useState(
     task ? new Date(task.dueDate) : new Date()
-  );
+  ); // State to store the selected due date
   const [attachedFiles, setAttachedFiles] = useState(
     task && task.files ? task.files : []
-  );
-  const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
-  const [categories, setCategories] = useState([]);
+  ); // State to store attached files
+  const [isDatePickerVisible, setIsDatePickerVisible] = useState(false); // State to control date picker visibility
+  const [categories, setCategories] = useState([]); // State to store categories
   const [selectedCategory, setSelectedCategory] = useState(
     task ? task.category : null
-  );
-  const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState("");
-  const [newCategoryColor, setNewCategoryColor] = useState("");
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [categoryToEdit, setCategoryToEdit] = useState(null);
+  ); // State to store the selected category
+  const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false); // State to control category modal visibility
+  const [newCategoryName, setNewCategoryName] = useState(""); // State to store the new category name
+  const [newCategoryColor, setNewCategoryColor] = useState(""); // State to store the new category color
+  const [isEditMode, setIsEditMode] = useState(false); // State to track whether we're editing an existing category
+  const [categoryToEdit, setCategoryToEdit] = useState(null); // State to store the category being edited
 
+  // Fetch categories when the component mounts
   useEffect(() => {
     fetchCategories();
   }, []);
 
+  // Update selected category if the task's category changes
   useEffect(() => {
     if (task && task.category) {
       setSelectedCategory(task.category);
     }
   }, [task]);
 
+  // Function to fetch categories from the server
   const fetchCategories = async () => {
     try {
       const response = await axios.get("http://localhost:3000/categories");
-      setCategories(response.data);
+      setCategories(response.data); // Update the categories state with fetched data
     } catch (error) {
       console.error("Error fetching categories:", error);
     }
   };
 
-  // function to add the task to Google Calendar
+  // Function to add the task to Google Calendar
   const addToCalendar = async () => {
     try {
       const response = await axios.post("http://localhost:3000/create-event", {
@@ -79,25 +83,26 @@ const TaskDetails = ({ route, navigation }) => {
         startDateTime: selectedDate.toISOString(),
         endDateTime: new Date(
           selectedDate.getTime() + 60 * 60 * 1000
-        ).toISOString(), // 1 hour later
+        ).toISOString(), 
       });
       console.log("Event URL:", response.data.eventUrl);
-      Alert.alert("Success", "Event added to Google Calendar");
+      Alert.alert("Success", "Event added to Google Calendar"); // success alert
     } catch (error) {
       console.error("Error adding event to Google Calendar:", error);
       Alert.alert(
         "Error",
         "Could not add event to Google Calendar. Please try again later."
-      );
+      ); // error alert
     }
   };
 
+  // Function to add a new category
   const addCategory = async () => {
     if (!newCategoryName || !newCategoryColor) {
       Alert.alert(
         "Validation Error",
         "Both name and color of the category are required"
-      );
+      ); //  validation error if inputs are missing
       return;
     }
     try {
@@ -105,21 +110,23 @@ const TaskDetails = ({ route, navigation }) => {
         name: newCategoryName,
         color: newCategoryColor,
       });
-      setCategories([...categories, response.data]);
-      setNewCategoryName("");
+      // updates catgory state with new category, clears input fields and closes category modal 
+      setCategories([...categories, response.data]); 
+      setNewCategoryName(""); 
       setNewCategoryColor("");
-      setIsCategoryModalVisible(false);
+      setIsCategoryModalVisible(false); 
     } catch (error) {
       console.error("Error adding category:", error);
     }
   };
 
+  // Function to edit an existing category
   const editCategory = async () => {
     if (!categoryToEdit || !newCategoryName || !newCategoryColor) {
       Alert.alert(
         "Validation Error",
         "Both name and color of the category are required"
-      );
+      ); // validation error if inputs are missing
       return;
     }
     try {
@@ -134,37 +141,40 @@ const TaskDetails = ({ route, navigation }) => {
         categories.map((cat) =>
           cat._id === categoryToEdit._id ? response.data : cat
         )
-      );
+      ); // This uppdates categories state with the edited category, clears input fields, exits edit mode and closes the modal
       setNewCategoryName("");
       setNewCategoryColor("");
-      setCategoryToEdit(null);
-      setIsEditMode(false);
-      setIsCategoryModalVisible(false);
+      setCategoryToEdit(null); 
+      setIsEditMode(false); 
+      setIsCategoryModalVisible(false); 
     } catch (error) {
       console.error("Error editing category:", error);
     }
   };
 
+  // Function to delete a category
   const deleteCategory = async (id) => {
     try {
       await axios.delete(`http://localhost:3000/categories/${id}`);
-      setCategories(categories.filter((cat) => cat._id !== id));
+      setCategories(categories.filter((cat) => cat._id !== id)); // Removes deleted category 
     } catch (error) {
       console.error("Error deleting category:", error);
     }
   };
 
+  // Function to open the modal for editing a category
   const openEditCategoryModal = (category) => {
-    setCategoryToEdit(category);
-    setNewCategoryName(category.name);
-    setNewCategoryColor(category.color);
-    setIsEditMode(true);
-    setIsCategoryModalVisible(true);
+    setCategoryToEdit(category); // Set the category to be edited
+    setNewCategoryName(category.name); // Pre-fill the category name
+    setNewCategoryColor(category.color); // Pre-fill the category color
+    setIsEditMode(true); 
+    setIsCategoryModalVisible(true); 
   };
 
+  // Function to save the task, either create a new task or update an existing one
   const saveTask = async () => {
     if (!taskName) {
-      Alert.alert("Validation Error", "Task name is required");
+      Alert.alert("Validation Error", "Task name is required"); 
       return;
     }
 
@@ -177,12 +187,12 @@ const TaskDetails = ({ route, navigation }) => {
           dueDate: selectedDate,
           files: attachedFiles,
           category: selectedCategory,
-          important: task.important || false, // Maintain important field
+          important: task.important || false, // Maintains the important field
         };
         await axios.put(
           `http://localhost:3000/tasks/${listId}/${task._id}`,
           updatedTask
-        );
+        ); // Update the task on the server
       } else {
         const newTask = {
           name: taskName,
@@ -196,17 +206,18 @@ const TaskDetails = ({ route, navigation }) => {
         await axios.post(`http://localhost:3000/tasks`, {
           listId,
           task: newTask,
-        });
+        }); // Create a new task on the server
       }
 
-      fetchTasks();
+      fetchTasks(); // Re-fetch the tasks to update the UI
       navigation.goBack();
     } catch (error) {
       console.error("Error saving task:", error);
-      Alert.alert("Error", "Could not save task. Please try again later.");
+      Alert.alert("Error", "Could not save task. Please try again later."); 
     }
   };
 
+  // Function to handle file picker action
   const handleFilePicker = async () => {
     ActionSheetIOS.showActionSheetWithOptions(
       {
@@ -215,16 +226,17 @@ const TaskDetails = ({ route, navigation }) => {
       },
       async (buttonIndex) => {
         if (buttonIndex === 1) {
-          await handleImagePicker("library");
+          await handleImagePicker("library"); // Open photo library
         } else if (buttonIndex === 2) {
-          await handleImagePicker("camera");
+          await handleImagePicker("camera"); // Open camera
         } else if (buttonIndex === 3) {
-          await pickDocument();
+          await pickDocument(); // Open file picker
         }
       }
     );
   };
 
+  // Function to handle image selection from camera or library
   const handleImagePicker = async (source) => {
     try {
       let result;
@@ -232,12 +244,12 @@ const TaskDetails = ({ route, navigation }) => {
         result = await ImagePicker.launchCameraAsync({
           mediaTypes: ImagePicker.MediaTypeOptions.All,
           base64: true,
-        });
+        }); // Launches devices camera
       } else {
         result = await ImagePicker.launchImageLibraryAsync({
           mediaTypes: ImagePicker.MediaTypeOptions.All,
           base64: true,
-        });
+        }); // Open image library
       }
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
@@ -259,20 +271,21 @@ const TaskDetails = ({ route, navigation }) => {
           }
         );
 
-        setAttachedFiles([...attachedFiles, response.data]);
+        setAttachedFiles([...attachedFiles, response.data]); // Add the selected file to the attached files state
       } else {
         console.error("Image picker error: ", result);
-        Alert.alert("Error", "Could not select the image. Please try again.");
+        Alert.alert("Error", "Could not select the image. Please try again."); // Shows an error alert incase image selection fails
       }
     } catch (error) {
       console.error("Error selecting image:", error);
       Alert.alert(
         "Error",
         "An unexpected error occurred while selecting the image. Please try again."
-      );
+      ); // Show error alert if an error occurs during image selection
     }
   };
 
+  // Function to pick a document
   const pickDocument = async () => {
     try {
       let result = await DocumentPicker.getDocumentAsync({});
@@ -296,23 +309,23 @@ const TaskDetails = ({ route, navigation }) => {
             },
           }
         );
-        setAttachedFiles([...attachedFiles, response.data]);
-      } else {
+        setAttachedFiles([...attachedFiles, response.data]); 
         console.error("Image picker error: ", result);
         Alert.alert(
           "Error",
           "Could not select the document. Please try again."
-        );
+        ); // error alert
       }
     } catch (error) {
       console.error("Error selecting document:", error);
       Alert.alert(
         "Error",
         "An unexpected error occurred while selecting the document. Please try again."
-      );
+      ); // error alert
     }
   };
 
+  // Function to handle file opening
   const handleFileOpen = async (uri) => {
     try {
       if (Platform.OS === "ios") {
@@ -322,23 +335,25 @@ const TaskDetails = ({ route, navigation }) => {
         IntentLauncher.startActivityAsync("android.intent.action.VIEW", {
           data: cUri,
           flags: 1,
-        });
+        }); 
       }
     } catch (err) {
       console.error("Failed to open file:", err);
-      Alert.alert("Error", "Could not open file. Please try again later.");
+      Alert.alert("Error", "Could not open file. Please try again later."); 
     }
   };
 
+  // Function to remove a file from the attached files list
   const handleFileRemove = (index) => {
     const updatedFiles = [...attachedFiles];
-    updatedFiles.splice(index, 1);
+    updatedFiles.splice(index, 1); 
     setAttachedFiles(updatedFiles);
   };
 
+  // Function to add the task to "My Day"
   const addToMyDay = async () => {
     if (!task || !task._id) {
-      Alert.alert("Error", "Task not found. Please try again.");
+      Alert.alert("Error", "Task not found. Please try again."); 
       return;
     }
 
@@ -351,28 +366,28 @@ const TaskDetails = ({ route, navigation }) => {
         `http://localhost:3000/tasks/${listId}/${task._id}`,
         updatedTask
       );
-      Alert.alert("Success", "Task added to My Day");
-      fetchTasks(); // Refetch the tasks to ensure the UI is updated
-      navigation.goBack(); // Navigate back after ensuring the task is updated
+      Alert.alert("Success", "Task added to My Day"); // success alert
+      fetchTasks(); 
+      navigation.goBack();
     } catch (error) {
       console.error("Error adding task to My Day:", error);
       Alert.alert(
         "Error",
         "Could not add task to My Day. Please try again later."
-      );
+      ); 
     }
   };
 
-  // Function to mark task as important
+  // Function to mark a task as important
   const markAsImportant = async () => {
     if (!task || !task._id) {
-      Alert.alert("Error", "Task not found. Please try again.");
+      Alert.alert("Error", "Task not found. Please try again."); 
       return;
     }
     try {
       const updatedTask = {
         ...task,
-        important: !task?.important, // Set the task as important
+        important: !task?.important, // Toggle the important status
       };
       await axios.put(
         `http://localhost:3000/tasks/${listId}/${task._id}`,
@@ -383,15 +398,15 @@ const TaskDetails = ({ route, navigation }) => {
         !task.important
           ? "Task marked as important"
           : "Task removed from important"
-      );
-      fetchTasks(); // Refetch the tasks to ensure the UI is updated
-      navigation.goBack(); // Navigate back after ensuring the task is updated
+      ); // Show success alert based on the updated important status
+      fetchTasks();
+      navigation.goBack(); 
     } catch (error) {
       console.error("Error marking task as important:", error);
       Alert.alert(
         "Error",
         "Could not mark task as important. Please try again later."
-      );
+      ); // Shows error alert if the task couldn't be marked as important
     }
   };
 
@@ -402,10 +417,11 @@ const TaskDetails = ({ route, navigation }) => {
           style={styles.taskNameInput}
           placeholder="Task name"
           value={taskName}
-          onChangeText={setTaskName}
+          onChangeText={setTaskName} // Update the task name state on input change
         />
         <View style={styles.separator} />
 
+        {/* add the task to Google Calendar */}
         <TouchableOpacity
           style={styles.optionContainer}
           onPress={addToCalendar}
@@ -415,12 +431,14 @@ const TaskDetails = ({ route, navigation }) => {
         </TouchableOpacity>
         <View style={styles.separator} />
 
+        {/* add the task to "My Day" */}
         <TouchableOpacity style={styles.optionContainer} onPress={addToMyDay}>
           <FontAwesome name="sun-o" size={24} color="#666666" />
           <Text style={styles.option}>Add to My Day</Text>
         </TouchableOpacity>
         <View style={styles.separator} />
 
+        {/* mark the task as important */}
         <TouchableOpacity
           style={styles.optionContainer}
           onPress={markAsImportant}
@@ -438,6 +456,7 @@ const TaskDetails = ({ route, navigation }) => {
         </TouchableOpacity>
         <View style={styles.separator} />
 
+        {/*add a due date to the task */}
         <TouchableOpacity
           style={styles.optionContainer}
           onPress={() => setIsDatePickerVisible(true)}
@@ -452,15 +471,16 @@ const TaskDetails = ({ route, navigation }) => {
             display="default"
             onChange={(event, date) => {
               setIsDatePickerVisible(false);
-              if (date) setSelectedDate(date);
+              if (date) setSelectedDate(date); // Update the selected date state
             }}
           />
         )}
         {selectedDate && (
-          <Text style={styles.selectedDate}>{selectedDate.toDateString()}</Text>
+          <Text style={styles.selectedDate}>{selectedDate.toDateString()}</Text> // Display the selected date
         )}
         <View style={styles.separator} />
 
+        {/* Category selection  */}
         <View style={styles.optionContainer}>
           <Text style={styles.option}>Category</Text>
           <TouchableOpacity
@@ -479,6 +499,7 @@ const TaskDetails = ({ route, navigation }) => {
         </View>
         <View style={styles.separator} />
 
+        {/* Displays the selected category */}
         {selectedCategory && (
           <View
             style={[
@@ -490,6 +511,7 @@ const TaskDetails = ({ route, navigation }) => {
           </View>
         )}
 
+        {/* adds a file to the task */}
         <TouchableOpacity
           style={styles.optionContainer}
           onPress={handleFilePicker}
@@ -497,6 +519,8 @@ const TaskDetails = ({ route, navigation }) => {
           <MaterialIcons name="attach-file" size={24} color="#666666" />
           <Text style={styles.option}>Add File</Text>
         </TouchableOpacity>
+
+        {/* Display the list of attached files */}
         {attachedFiles.map((file, index) => (
           <View key={index} style={styles.filePreviewContainer}>
             {file.type && file.type.startsWith("image") ? (
@@ -522,16 +546,17 @@ const TaskDetails = ({ route, navigation }) => {
           style={styles.addNote}
           placeholder="Add Note"
           value={description}
-          onChangeText={setDescription}
+          onChangeText={setDescription} // Update the description state on input change
           multiline
         />
       </View>
       <TouchableOpacity style={styles.saveButton} onPress={saveTask}>
         <Text style={styles.saveButtonText}>
-          {task ? "Update Task" : "Save Task"}
+          {task ? "Update Task" : "Save Task"} {/* Button text changes based on whether the task is being updated or created */}
         </Text>
       </TouchableOpacity>
 
+      {/* Modal for selecting or adding a category */}
       <Modal
         visible={isCategoryModalVisible}
         transparent={true}
@@ -548,8 +573,8 @@ const TaskDetails = ({ route, navigation }) => {
                   <TouchableOpacity
                     style={styles.categoryOption}
                     onPress={() => {
-                      setSelectedCategory(item);
-                      setIsCategoryModalVisible(false);
+                      setSelectedCategory(item); // Set the selected category
+                      setIsCategoryModalVisible(false); 
                     }}
                   >
                     <View
@@ -571,13 +596,13 @@ const TaskDetails = ({ route, navigation }) => {
               )}
             />
             <Text style={styles.modalSubtitle}>
-              {isEditMode ? "Edit" : "Add"} Category
+              {isEditMode ? "Edit" : "Add"} Category {/* The text will changes based on mode */}
             </Text>
             <TextInput
               style={styles.input}
               placeholder="Category Name"
               value={newCategoryName}
-              onChangeText={setNewCategoryName}
+              onChangeText={setNewCategoryName} // Update category name input
             />
             <FlatList
               data={predefinedColors}
@@ -586,7 +611,7 @@ const TaskDetails = ({ route, navigation }) => {
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={[styles.colorOption, { backgroundColor: item.value }]}
-                  onPress={() => setNewCategoryColor(item.value)}
+                  onPress={() => setNewCategoryColor(item.value)} // Updates category color input
                 >
                   {newCategoryColor === item.value && (
                     <MaterialIcons name="check" size={24} color="#FFFFFF" />
@@ -598,19 +623,19 @@ const TaskDetails = ({ route, navigation }) => {
               style={styles.input}
               placeholder="Or Enter Custom Color (e.g., #FF0000)"
               value={newCategoryColor}
-              onChangeText={setNewCategoryColor}
+              onChangeText={setNewCategoryColor} // Updates custom color input
             />
             <TouchableOpacity
               style={styles.saveButton}
-              onPress={isEditMode ? editCategory : addCategory}
+              onPress={isEditMode ? editCategory : addCategory} // Either edit or add a category based on mode
             >
               <Text style={styles.saveButtonText}>
-                {isEditMode ? "Update Category" : "Add Category"}
+                {isEditMode ? "Update Category" : "Add Category"} {/* Button text changes based on mode */}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.cancelButton}
-              onPress={() => setIsCategoryModalVisible(false)}
+              onPress={() => setIsCategoryModalVisible(false)} 
             >
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
@@ -620,6 +645,7 @@ const TaskDetails = ({ route, navigation }) => {
     </ScrollView>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
@@ -791,11 +817,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     justifyContent: "center",
     alignItems: "center",
-    alignSelf: "center", // Center align the orb
+    alignSelf: "center",
   },
   categoryOrbText: {
     fontSize: 14,
-    color: "#FFFFFF", // Text color for the orb
+    color: "#FFFFFF", 
   },
 });
 

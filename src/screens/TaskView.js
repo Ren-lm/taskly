@@ -21,6 +21,8 @@ import { CountdownCircleTimer } from "react-native-countdown-circle-timer";
 import axios from "axios";
 import { Picker } from "@react-native-picker/picker";
 
+// Formats a date string into a more readable format
+
 export const formatDate = (dateString) => {
   const date = new Date(dateString);
   const currentYear = new Date().getFullYear();
@@ -49,6 +51,7 @@ const TaskView = ({ route, navigation }) => {
     fetchTasks();
   }, []);
 
+    // Fetches tasks from the server for the specified list
   const fetchTasks = async () => {
     try {
       const response = await axios.get(`http://localhost:3000/tasks`, {
@@ -61,6 +64,7 @@ const TaskView = ({ route, navigation }) => {
     }
   };
 
+    // Deletes a task by its ID
   const deleteTask = async (id) => {
     try {
       const response = await axios.delete(
@@ -77,6 +81,7 @@ const TaskView = ({ route, navigation }) => {
     }
   };
 
+    // Toggles the completion status of a task by its ID
   const toggleCompleteTask = async (id) => {
     try {
       const task = tasks.find((task) => task._id === id);
@@ -104,6 +109,7 @@ const TaskView = ({ route, navigation }) => {
     }
   };
 
+    // Handles the selection of a timer duration
   const handleTimeSelect = (itemValue) => {
     if (itemValue === "custom") {
       setIsCustomTime(true);
@@ -114,6 +120,7 @@ const TaskView = ({ route, navigation }) => {
     }
   };
 
+    // Sets a custom time for the timer
   const handleCustomTimeSet = () => {
     if (!customTime || isNaN(customTime)) {
       Alert.alert(
@@ -128,7 +135,8 @@ const TaskView = ({ route, navigation }) => {
     setIsCustomTime(false);
     setIsTimerModalVisible(false);
   };
-
+  
+    // Renders the right swipe action (delete button) for each task
   const renderRightActions = (id) => (
     <TouchableOpacity
       style={styles.deleteButton}

@@ -1,4 +1,4 @@
-//Frontend code: LoginScreen.js
+// Frontend code: LoginScreen.js
 
 import React, { useState } from "react";
 import {
@@ -15,23 +15,23 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useQueryClient } from "@tanstack/react-query";
 
 const LoginScreen = ({ navigation }) => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const qc = useQueryClient();
+  const [email, setEmail] = useState(""); // State for email input
+  const [password, setPassword] = useState(""); // State for password input
+  const qc = useQueryClient(); // Initialize query client for data fetching
 
   const handleLogin = async () => {
     try {
+      // Make a POST request to the login API with email and password
       const response = await axios.post(
         "http://localhost:3000/api/auth/login",
         { email, password }
       );
+      // Store the received token in AsyncStorage
       await AsyncStorage.setItem("token", response.data?.token);
+      // Refetch the user data after login
       qc.refetchQueries(["user"]);
-
-      // Alert.alert("Success", "Logged in successfully!");
-      // Navigate to the AccountScreen after successful login
-      // navigation.navigate("AccountScreen");
     } catch (error) {
+      // Show an alert if the login fails
       Alert.alert("Error", "Invalid credentials");
     }
   };
@@ -40,21 +40,21 @@ const LoginScreen = ({ navigation }) => {
     <View style={styles.container}>
       <Image
         style={styles.logo}
-        source={require("../../assets/tasklylogo.png")}
+        source={require("../../assets/tasklylogo.png")} // Displays the app logo
       />
       <Text style={styles.title}>Login</Text>
       <TextInput
         style={styles.input}
         placeholder="Email"
         value={email}
-        onChangeText={setEmail}
+        onChangeText={setEmail} // Updates the email state on change
         keyboardType="email-address"
       />
       <TextInput
         style={styles.input}
         placeholder="Password"
         value={password}
-        onChangeText={setPassword}
+        onChangeText={setPassword} // Updates the password state on change
         secureTextEntry
       />
       <TouchableOpacity style={styles.button} onPress={handleLogin}>

@@ -24,18 +24,20 @@ import { QueryClient, useQueryClient } from "@tanstack/react-query";
 
 const API_URL = "http://localhost:3000";
 
+// Defines the AccountScreen component receiving the navigation prop
 const AccountScreen = ({ navigation }) => {
   const qc = useQueryClient();
-  const [lists, setLists] = useState([]);
+  const [lists, setLists] = useState([]);   // State to store the list of lists fetched from the server
+  const [listName, setListName] = useState("");  // State to manage the name of the new list being created
+  const [isModalVisible, setIsModalVisible] = useState(false);   // State to control the visibility of the modal
 
-  const [listName, setListName] = useState("");
-  const [isModalVisible, setIsModalVisible] = useState(false);
   const user = useUser();
 
   useEffect(() => {
     fetchLists();
   }, []);
 
+  // Function to fetch lists from the server
   const fetchLists = async () => {
     try {
       const token = await AsyncStorage.getItem("token");
@@ -51,6 +53,7 @@ const AccountScreen = ({ navigation }) => {
     }
   };
 
+    // Function to add a new list
   const addNewList = async () => {
     if (listName) {
       try {
@@ -66,8 +69,9 @@ const AccountScreen = ({ navigation }) => {
           }),
         });
         await response.json();
+        // refreshes list of lists, clears list name input and closes modal
         fetchLists();
-        setListName("");
+        setListName(""); 
         setIsModalVisible(false);
       } catch (error) {
         console.error("Error adding list:", error);
@@ -75,6 +79,7 @@ const AccountScreen = ({ navigation }) => {
     }
   };
 
+    // Function to delete an existing list
   const deleteExistingList = async (id) => {
     try {
       await fetch(`${API_URL}/lists/${id}`, {
@@ -86,6 +91,8 @@ const AccountScreen = ({ navigation }) => {
     }
   };
 
+    // Function to render the right swipeable actions for deleting a list
+
   const renderRightActions = (id) => (
     <TouchableOpacity
       style={styles.deleteButton}
@@ -95,6 +102,7 @@ const AccountScreen = ({ navigation }) => {
     </TouchableOpacity>
   );
 
+    // This is if the user data is not available it shows a loading screen
   if (!user.data) {
     return (
       <View style={styles.loadingContainer}>
@@ -116,7 +124,7 @@ const AccountScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        {/* My Day Section with Sun Icon */}
+       {/* My Day Section */}
         <TouchableOpacity
           style={styles.sectionContainer}
           onPress={() => navigation.navigate("MyDay")}
@@ -130,7 +138,7 @@ const AccountScreen = ({ navigation }) => {
           <Text style={styles.sectionTitle}>My Day</Text>
         </TouchableOpacity>
 
-        {/* Important Section with Star Icon */}
+        {/* Important Section  */}
         <TouchableOpacity
           style={styles.sectionContainer}
           onPress={() => navigation.navigate("Important")}
@@ -144,6 +152,8 @@ const AccountScreen = ({ navigation }) => {
           <Text style={styles.sectionTitle}>Important</Text>
         </TouchableOpacity>
 
+        {/* Title for the lists section */}
+
         <Text style={styles.title}>My Lists</Text>
         <FlatList
           data={lists}
@@ -152,8 +162,8 @@ const AccountScreen = ({ navigation }) => {
               <TouchableOpacity
                 onPress={() =>
                   navigation.navigate("TaskView", {
-                    listId: item._id,
-                    listName: item.name,
+                    listId: item._id, // This passes the list ID to the TaskView screen
+                    listName: item.name,// This passes the list name to the TaskView screen
                   })
                 }
               >
@@ -165,7 +175,7 @@ const AccountScreen = ({ navigation }) => {
         />
         <TouchableOpacity
           style={styles.addButton}
-          onPress={() => setIsModalVisible(true)}
+          onPress={() => setIsModalVisible(true)} // Shows the modal for adding a new list
         >
           <AntDesign name="pluscircle" size={50} color="#22A39F" />
         </TouchableOpacity>
