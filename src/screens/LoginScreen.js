@@ -1,4 +1,3 @@
-
 //Frontend code: LoginScreen.js
 
 import React, { useState } from "react";
@@ -12,10 +11,13 @@ import {
   Image,
 } from "react-native";
 import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useQueryClient } from "@tanstack/react-query";
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const qc = useQueryClient();
 
   const handleLogin = async () => {
     try {
@@ -23,11 +25,12 @@ const LoginScreen = ({ navigation }) => {
         "http://localhost:3000/api/auth/login",
         { email, password }
       );
-      // Store token and navigate to the main app screen
-      // You can use AsyncStorage to store the token
-      Alert.alert("Success", "Logged in successfully!");
-    // Navigate to the AccountScreen after successful login
-    navigation.navigate('AccountScreen');      
+      await AsyncStorage.setItem("token", response.data?.token);
+      qc.refetchQueries(["user"]);
+
+      // Alert.alert("Success", "Logged in successfully!");
+      // Navigate to the AccountScreen after successful login
+      // navigation.navigate("AccountScreen");
     } catch (error) {
       Alert.alert("Error", "Invalid credentials");
     }
@@ -71,12 +74,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#EEEEEE",
   },
-  title: { 
-    fontSize: 24, 
-    marginBottom: 20, 
-    color: "#222831"
- },
-
+  title: {
+    fontSize: 24,
+    marginBottom: 20,
+    color: "#222831",
+  },
 
   input: {
     width: "80%",
@@ -93,11 +95,11 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
 
-  buttonText: { 
+  buttonText: {
     textAlign: "center",
-     color: "#FFFFFF", 
-     fontSize: 16 },
-
+    color: "#FFFFFF",
+    fontSize: 16,
+  },
 
   linkText: { color: "#22A39F", marginTop: 20 },
   logo: {
