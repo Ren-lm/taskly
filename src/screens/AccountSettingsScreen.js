@@ -1,31 +1,39 @@
 // Frontend code: AccountSettingsScreen.js
 
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, AsyncStorage } from 'react-native';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
 
-const API_URL = 'http://localhost:3000';
+const API_URL = "http://localhost:3000";
 
 const AccountSettingsScreen = ({ navigation }) => {
   const [user, setUser] = useState({
-    name: '',
-    email: '',
-    password: '',
-    newPassword: '',
-    confirmPassword: ''
+    name: "",
+    email: "",
+    password: "",
+    newPassword: "",
+    confirmPassword: "",
   });
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const token = await AsyncStorage.getItem('token');
+        const token = await AsyncStorage.getItem("token");
         if (!token) {
-          navigation.navigate('Login');
+          navigation.navigate("Login");
           return;
         }
 
         const response = await axios.get(`${API_URL}/api/auth/me`, {
-          headers: { 'x-auth-token': token },
+          headers: { "x-auth-token": token },
         });
         setUser({
           ...user,
@@ -33,7 +41,7 @@ const AccountSettingsScreen = ({ navigation }) => {
           email: response.data.email,
         });
       } catch (error) {
-        Alert.alert('Error', 'Failed to load user data');
+        Alert.alert("Error", "Failed to load user data");
       }
     };
 
@@ -41,21 +49,64 @@ const AccountSettingsScreen = ({ navigation }) => {
   }, []);
 
   const handleSave = async () => {
-    if (user.newPassword !== user.confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+    if (!user.name) {
+      Alert.alert("Error", "Name cannot be empty");
+      return;
+    }
+    if (!user.email) {
+      Alert.alert("Error", "Email cannot be empty");
       return;
     }
 
-    try {
-      const token = await AsyncStorage.getItem('token');
-      const response = await axios.put(`${API_URL}/api/auth/update`, user, {
-        headers: { 'x-auth-token': token },
-      });
+    if (!user.password) {
+      Alert.alert(
+        "Error",
+        "Please Enter your current password to update details"
+      );
+      return;
+    }
 
-      Alert.alert('Success', 'Account details updated successfully');
-      navigation.goBack(); // Navigate back to the Account screen
-    } catch (error) {
-      Alert.alert('Error', 'Failed to update account details');
+    // update only email and name
+    if (!user.newPassword && !user.confirmPassword) {
+      try {
+        const token = await AsyncStorage.getItem("token");
+        const response = await axios.put(
+          `${API_URL}/api/auth/update`,
+          { ...user, mode: "email" },
+          {
+            headers: { "x-auth-token": token },
+          }
+        );
+
+        Alert.alert("Success", "Account details updated successfully");
+        navigation.goBack(); // Navigate back to the Account screen
+      } catch (error) {
+        console.log(error);
+        Alert.alert("Error", error?.response?.data?.msg);
+      }
+    }
+    // update password
+    else {
+      if (user.newPassword !== user.confirmPassword) {
+        Alert.alert("Error", "New Password and Confirm Password do not match");
+        return;
+      }
+      try {
+        const token = await AsyncStorage.getItem("token");
+        const response = await axios.put(
+          `${API_URL}/api/auth/update`,
+          { ...user, mode: "password" },
+          {
+            headers: { "x-auth-token": token },
+          }
+        );
+
+        Alert.alert("Success", "Account details updated successfully");
+        navigation.goBack(); // Navigate back to the Account screen
+      } catch (error) {
+        console.log(error);
+        Alert.alert("Error", error?.response?.data?.msg);
+      }
     }
   };
 
@@ -106,32 +157,32 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#31363F',
+    backgroundColor: "#31363F",
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 20,
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   input: {
     borderWidth: 1,
-    borderColor: '#222831',
+    borderColor: "#222831",
     borderRadius: 5,
     padding: 10,
-    backgroundColor: '#EEEEEE',
+    backgroundColor: "#EEEEEE",
     marginBottom: 10,
-    color: '#222831',
+    color: "#222831",
   },
   saveButton: {
-    backgroundColor: '#22A39F',
+    backgroundColor: "#22A39F",
     paddingVertical: 10,
     borderRadius: 5,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 20,
   },
   saveButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
   },
 });
