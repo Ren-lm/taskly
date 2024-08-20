@@ -28,11 +28,11 @@ const RegisterScreen = ({ navigation }) => {
         "http://localhost:3000/api/auth/register",
         { name, email, password }
       );
-      // Show user a success alert on successful registration
+      // Shows user a success alert on successful registration
       Alert.alert("Success", "Account created successfully!");
-      navigation.navigate("LoginScreen"); // Navigate to the login screen
+      navigation.navigate("LoginScreen"); // Navigates to the login screen
     } catch (error) {
-      // Check if error.response exists before accessing it
+      // Checks if error.response exists before accessing it
       if (error.response && error.response.data) {
         Alert.alert("Error", error.response.data);
       } else {
