@@ -82,6 +82,7 @@ import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import AccountScreen from '../screens/AccountScreen';
 import TaskView from '../screens/TaskView';
+import TaskDetails from '../screens/TaskDetails';
 import '@testing-library/jest-native/extend-expect';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -189,5 +190,41 @@ describe('TaskView', () => {
     );
 
     expect(getByTestId('add-task-button')).toBeTruthy();
+  });
+});
+
+describe('TaskDetails', () => {
+  const route = {
+    params: {
+      task: { name: 'Test Task', description: 'Test Description' },
+      listId: '1',
+      fetchTasks: jest.fn(),
+    },
+  };
+
+  const navigation = {
+    navigate: jest.fn(),
+  };
+
+  // Test to check if the Task name input field is rendered
+  it('renders the "Task name" input field', () => {
+    const { getByPlaceholderText } = render(
+      <QueryClientProvider client={queryClient}>
+        <TaskDetails route={route} navigation={navigation} />
+      </QueryClientProvider>
+    );
+
+    expect(getByPlaceholderText('Task name')).toBeTruthy();
+  });
+
+  // Test to check if the Add to My Day button is rendered
+  it('renders the "Add to My Day" button', () => {
+    const { getByText } = render(
+      <QueryClientProvider client={queryClient}>
+        <TaskDetails route={route} navigation={navigation} />
+      </QueryClientProvider>
+    );
+
+    expect(getByText('Add to My Day')).toBeTruthy();
   });
 });
