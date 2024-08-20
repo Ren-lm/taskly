@@ -347,6 +347,42 @@ describe('ImportantScreen', () => {
   });
 
 
+  describe('LoginScreen', () => {
+    // Mock navigation
+    const navigation = {
+      navigate: jest.fn(),
+    };
+  
+    // Test to check if the email input field is rendered
+    it('renders the email input field', () => {
+      const { getByPlaceholderText } = render(
+        <QueryClientProvider client={queryClient}>
+          <LoginScreen navigation={navigation} />
+        </QueryClientProvider>
+      );
+  
+      const emailInput = getByPlaceholderText('Email');
+      expect(emailInput).toBeTruthy();
+    });
+  
+  
+    // Test to check if pressing the "Register" link navigates to the RegisterScreen
+    it('navigates to the RegisterScreen when the link is pressed', () => {
+      const { getByText } = render(
+        <QueryClientProvider client={queryClient}>
+          <LoginScreen navigation={navigation} />
+        </QueryClientProvider>
+      );
+  
+      const registerLink = getByText("Don't have an account? Register");
+      fireEvent.press(registerLink);
+  
+      expect(navigation.navigate).toHaveBeenCalledWith('RegisterScreen');
+    });
+  });
+
+
+
   
 
   
