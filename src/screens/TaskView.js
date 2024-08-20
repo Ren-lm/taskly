@@ -212,6 +212,7 @@ const TaskView = ({ route, navigation }) => {
 
         <TouchableOpacity
           style={styles.addButton}
+          testID="add-task-button"
           onPress={() =>
             navigation.navigate("TaskDetails", {
               task: null,

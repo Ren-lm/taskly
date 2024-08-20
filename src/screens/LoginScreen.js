@@ -1,5 +1,4 @@
-// Frontend code: LoginScreen.js
-
+//Frontend:loginscreen.js
 import React, { useState } from "react";
 import {
   View,
@@ -9,6 +8,9 @@ import {
   StyleSheet,
   Alert,
   Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from "react-native";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -21,65 +23,75 @@ const LoginScreen = ({ navigation }) => {
 
   const handleLogin = async () => {
     try {
-      // Make a POST request to the login API with email and password
+      // Makes a POST request to the login API with email and password
       const response = await axios.post(
         "http://localhost:3000/api/auth/login",
         { email, password }
       );
-      // Store the received token in AsyncStorage
+      // Stores the received token in AsyncStorage
       await AsyncStorage.setItem("token", response.data?.token);
-      // Refetch the user data after login
+      // Refetches the user data after login
       qc.refetchQueries(["user"]);
     } catch (error) {
-      // Show an alert if the login fails
+      // Shows an alert if the login fails
       Alert.alert("Error", "Invalid credentials");
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Image
-        style={styles.logo}
-        source={require("../../assets/tasklylogo.png")} // Displays the app logo
-      />
-      <Text style={styles.title}>Login</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail} // Updates the email state on change
-        keyboardType="email-address"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword} // Updates the password state on change
-        secureTextEntry
-      />
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Login</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigation.navigate("RegisterScreen")}>
-        <Text style={styles.linkText}>Don't have an account? Register</Text>
-      </TouchableOpacity>
-    </View>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={styles.container}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Image
+          style={styles.logo}
+          source={require("../../assets/tasklylogo.png")} // Displays the app logo
+        />
+        <Text style={styles.title}>Login</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail} // Updates the email state on change
+          keyboardType="email-address"
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          value={password}
+          onChangeText={setPassword} // Updates the password state on change
+          secureTextEntry
+        />
+        <TouchableOpacity style={styles.button} onPress={handleLogin}>
+          <Text style={styles.buttonText}>Login</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate("RegisterScreen")}>
+          <Text style={styles.linkText}>Don't have an account? Register</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#EEEEEE",
+  },
+  scrollContainer: {
+    flexGrow: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#EEEEEE",
   },
   title: {
     fontSize: 24,
     marginBottom: 20,
     color: "#222831",
   },
-
   input: {
     width: "80%",
     padding: 15,
@@ -94,13 +106,11 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginTop: 20,
   },
-
   buttonText: {
     textAlign: "center",
     color: "#FFFFFF",
     fontSize: 16,
   },
-
   linkText: { color: "#22A39F", marginTop: 20 },
   logo: {
     width: 300,

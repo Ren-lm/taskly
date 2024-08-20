@@ -10,7 +10,7 @@ import {
   ImageBackground,
   Alert,
 } from "react-native";
-import { MaterialIcons, FontAwesome } from "react-native-vector-icons";
+import { MaterialIcons, FontAwesome } from "@expo/vector-icons";
 import { Swipeable } from "react-native-gesture-handler";
 import axios from "axios";
 import { useUser } from "../hooks/useUser";

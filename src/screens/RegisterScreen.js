@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import {
   View,
@@ -7,6 +8,9 @@ import {
   StyleSheet,
   Alert,
   Image,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
 } from "react-native";
 import axios from "axios";
 
@@ -28,53 +32,73 @@ const RegisterScreen = ({ navigation }) => {
       Alert.alert("Success", "Account created successfully!");
       navigation.navigate("LoginScreen"); // Navigate to the login screen
     } catch (error) {
-      // This will show user an error alert if registration fails
-      Alert.alert("Error", error.response.data);
+      // Check if error.response exists before accessing it
+      if (error.response && error.response.data) {
+        Alert.alert("Error", error.response.data);
+      } else {
+        Alert.alert("Error", "An unexpected error occurred. Please try again later.");
+      }
     }
   };
+  
 
   return (
-    <View style={styles.container}>
-      <Image
-        style={styles.logo}
-        source={require("../../assets/tasklylogo.png")}
-      />
-      <Text style={styles.title}>Register</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Name"
-        value={name}
-        onChangeText={setName} // Update name state on input change
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail} // Update email state on input change
-        keyboardType="email-address" // Use email keyboard type
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword} // Update password state on input change
-        secureTextEntry 
-      />
-      <TouchableOpacity style={styles.button} onPress={handleRegister}>
-        <Text style={styles.buttonText}>Register</Text>
-      </TouchableOpacity>
-    </View>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Image
+          style={styles.logo}
+          source={require("../../assets/tasklylogo.png")}
+        />
+        <Text style={styles.title}>Register</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Name"
+          value={name}
+          onChangeText={setName} // Update name state on input change
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail} // Update email state on input change
+          keyboardType="email-address" // Use email keyboard type
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          value={password}
+          onChangeText={setPassword} // Update password state on input change
+          secureTextEntry
+        />
+        <TouchableOpacity style={styles.button} onPress={handleRegister}>
+          <Text style={styles.buttonText}>Register</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
     backgroundColor: "#EEEEEE",
   },
-  title: { fontSize: 24, marginBottom: 20, color: "#222831" },
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  title: {
+    fontSize: 24,
+    marginBottom: 20,
+    color: "#222831",
+  },
   input: {
     width: "80%",
     padding: 15,
@@ -89,15 +113,15 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginTop: 20,
   },
-  buttonText: 
-  { textAlign: "center",
-   color: "#FFFFFF", 
-   fontSize: 16 },
-
-   logo: {
-     width: 300,
-     height: 300,
-   },
+  buttonText: {
+    textAlign: "center",
+    color: "#FFFFFF",
+    fontSize: 16,
+  },
+  logo: {
+    width: 300,
+    height: 300,
+  },
 });
 
 export default RegisterScreen;
