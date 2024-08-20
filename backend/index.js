@@ -680,6 +680,34 @@ app.delete("/categories/:id", async (req, res) => {
   }
 });
 
+app.put("/categories/:id", async (req, res) => {
+  const { id } = req.params; // Extract category ID from the URL parameter
+  const { name, color } = req.body; // Extract name and color from the request body
+
+  try {
+    // Find the category by ID
+    const category = await Category.findById(id);
+
+    // If the category is not found, return a 404 error
+    if (!category) {
+      return res.status(404).send({ message: "Category not found" });
+    }
+
+    // Update the category's name and color
+    category.name = name;
+    category.color = color;
+
+    // Save the updated category back to the database
+    await category.save();
+
+    // Return the updated category
+    res.send(category);
+  } catch (error) {
+    console.error("Error updating category:", error);
+    res.status(500).send({ message: "Internal Server Error", error: error.message });
+  }
+});
+
 app.get("/tasks/today", authenticateToken, async (req, res) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
